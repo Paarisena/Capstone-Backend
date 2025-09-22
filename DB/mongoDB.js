@@ -20,7 +20,7 @@ const localdb = localclient.db(db_name)
 
 const connecttodb = async() =>{
     try{
-        await localclient.connect();
+        await client.connect();
         console.log("DB Connected Success")
     }catch (err){
         console.log("Error in MongoDB" + err)
