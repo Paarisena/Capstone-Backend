@@ -14,7 +14,7 @@ const cloudurl = `mongodb+srv://${db_user}:${db_password}@${db_cluster}/${db_nam
 
 const mongooseconnect = async()=>{
     try{
-    await mongoose.connect(localurl);
+    await mongoose.connect(cloudurl);
     console.log("Mongoose Connection Established")
 } catch(err){
     console.log("Mongoose connection error" +err)
