@@ -7,7 +7,7 @@ import { v2 as cloudinary } from "cloudinary"
 import cloudinaryConfig from "../Config/Cloudinary.js"
 import brevo from'@getbrevo/brevo'
 import crypto from "crypto"
-import { sendEmail, sendAdminResetEmail, sendLoginVerificationEmail } from "./Dashboard.js"
+import { sendEmail, sendAdminResetEmail, sendLoginVerificationEmail, passwordSuccessEmail } from "./Dashboard.js"
 
 dotenv.config()
 
@@ -511,15 +511,15 @@ registration.post('/reset-password', async (req, res) => {
     
     // Send appropriate confirmation email based on user type
     if (isAdmin) {
-      await sendAdminResetEmail(
+      await passwordSuccessEmail(
         existingUser.email,
         'Admin Password Changed Successfully',
         existingUser.name
       );
     } else {
-      await sendEmail(
+      await passwordSuccessEmail(
         existingUser.email,
-        'Password Changed Successfully',
+        'User Password Changed Successfully',
         existingUser.name
       );
     }

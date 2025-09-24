@@ -321,6 +321,44 @@ const sendAdminResetEmail = async (to, subject, recipientName = '', resetLink = 
     }
 };
 
+const passwordSuccessEmail = async (to, subject, recipientName = '') => {
+    try {
+        const sendSmtpEmail = new brevo.SendSmtpEmail();
+        sendSmtpEmail.sender = {
+            name: process.env.SENDER_NAME || 'Art Vista Gallery',
+            email: process.env.SENDER_EMAIL || 'noreply@avgallery.shop'
+        };
+        sendSmtpEmail.to = [{
+            email: to,
+            name: recipientName || to.split('@')[0]
+        }];
+        sendSmtpEmail.subject = subject;
+        sendSmtpEmail.htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+`;
+        sendSmtpEmail.htmlContent += `
+                <h2 style="color: #333; text-align: center;">Art Vista Gallery</h2>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #28a745;">
+                    <h3 style="color: #444;">Hello ${recipientName},</h3>
+                    <div style="background-color: #e8f5e9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">        
+                        <p style="color: #2e7d32; margin: 0;">
+                            <strong>Success!</strong> Your password has been changed successfully.
+                        </p>
+                    </div>
+                    <p style="color: #666;">If you did not initiate this change, please contact support immediately.</p>
+                    <p style="color: #999; font-size: 14px; margin-top: 20px;">Thank you for being a valued member of Art Vista Gallery.</p>
+                </div>
+            </div>
+        `;  
+        const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
+        console.log('Password success email sent successfully:', response);
+        return { success: true, messageId: response.messageId };
+    } catch (error) {
+        console.error('Error sending password success email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 const sendLoginVerificationEmail = async (to, subject, recipientName = '', verificationCode = '', verificationLink = '') => {
     try {
         const sendSmtpEmail = new brevo.SendSmtpEmail();
@@ -451,4 +489,4 @@ const sendVerificationEmailUser = async (to, subject, recipientName = '', verifi
 
 
 
-export {addProduct,listProducts,deleteProduct, singleProduct, reviewProduct, listPublicProducts, editProduct, addProfile, fetchProfile, sendEmail, sendAdminResetEmail, sendLoginVerificationEmail, sendVerificationEmailUser}
+export {addProduct,listProducts,deleteProduct, singleProduct, reviewProduct, listPublicProducts, editProduct, addProfile, fetchProfile, sendEmail, sendAdminResetEmail,passwordSuccessEmail, sendLoginVerificationEmail, sendVerificationEmailUser}
