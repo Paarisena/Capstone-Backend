@@ -211,9 +211,85 @@ const verificationSchema = new mongoose.Schema({
     }
 });
 
+
 // Add indexes for better query performance
 verificationSchema.index({ userId: 1, token: 1 });
 verificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 });
 const Verification = new mongoose.model("Verification", verificationSchema, "Verifications");
 
-export {user, admin, Database, ReviewDatabase, profile, Verification}
+const paymentSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+        required: true
+    },
+    orderId:{
+        type:String,
+        required:true
+    },
+    amount: {
+        type: Number,
+        required: true
+    },
+    currency: {
+        type: String,
+        required: true,
+        default: 'SGD'
+    },
+    paymentMethod: {
+        type: String,
+        required: true,
+        enum: ['credit_card', 'debit_card', 'paypal', 'stripe', 'cash_on_delivery'],
+        default: 'credit_card'
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['pending', 'completed', 'failed', 'cancelled', 'refunded'],
+        default: 'pending',
+        required: true
+    },
+    transactionId:{
+        type:String,
+        default:null
+    },
+    items:[{
+        productId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Database",
+            required: true
+        },
+        
+        quantity: {
+            type: Number,
+            required: true,
+            min : 1
+        },
+        price: {
+            type: Number,
+            required: true,
+        }
+    }],
+    shippingAddress: {
+        street: String,
+        city: String,
+        state: String,
+        zip: String
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+ 
+paymentSchema.pre('save', function (next) {
+    this.updatedAt = Date.now();
+    next();
+});
+
+const payment = new mongoose.model("Payment", paymentSchema, "Payments");
+
+export {user, admin, Database, ReviewDatabase, profile, Verification, payment}

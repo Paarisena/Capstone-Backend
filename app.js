@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 import mongooseconnect from "./DB/Moongoose-connection.js"
 import connecttodb from "./DB/mongoDB.js"
 import regis from "./Login page/registration.js"
+import payments from "./Login page/Payments.js"
 import ProductRouter from "./Routes/ProductRoutes.js"
 import path from "path"
 import{ fileURLToPath } from "url"
@@ -24,8 +25,10 @@ app.use(express.json(({ limit: '40mb' })))
 app.use(cors( {origin: "http://localhost:5173",credentials: true}))
 
 app.use("/api",regis)
+
 app.use("/api",ProductRouter)
 
+app.use("/api",payments)
 
 await connecttodb()
 await mongooseconnect()
