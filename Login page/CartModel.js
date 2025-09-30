@@ -117,4 +117,5 @@ const deleteFromCart = async (req, res) => {
     }
 };
 
+
 export { addToCart, updateCart, getUserCart, deleteFromCart };
