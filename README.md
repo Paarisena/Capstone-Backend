@@ -1,53 +1,14 @@
-# 🎨 Art Vista Gallery - Backend API
+# Art Vista Gallery - Backend
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![Express.js](https://img.shields.io/badge/Express.js-4.x-blue.svg)](https://expressjs.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green.svg)](https://www.mongodb.com/)
-[![Stripe](https://img.shields.io/badge/Stripe-API-purple.svg)](https://stripe.com/)
+Node.js/Express.js backend API for Art Vista Gallery e-commerce platform.
 
-A robust Node.js/Express.js backend API powering the Art Vista Gallery e-commerce platform. Features include user authentication, product management, secure payment processing, real-time notifications, and comprehensive email services.
-
-## 📋 Table of Contents
-
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Quick Start](#-quick-start)
-- [Environment Setup](#-environment-setup)
-- [API Documentation](#-api-documentation)
-- [Database Schema](#-database-schema)
-- [Project Structure](#-project-structure)
-- [Authentication](#-authentication)
-- [Payment Integration](#-payment-integration)
-- [Email Services](#-email-services)
-- [File Upload](#-file-upload)
-- [Real-time Features](#-real-time-features)
-- [Deployment](#-deployment)
-- [Testing](#-testing)
-- [Contributing](#-contributing)
-
-## ✨ Features
-
-### 🔐 Authentication & Security
-- JWT-based user authentication
-- Secure password hashing with bcrypt
-- Email verification for new accounts
-- Two-factor authentication with verification codes
-- Password reset functionality
-- Admin and user role management
-
-### 🛍️ E-commerce Functionality
-- Complete product catalog management
-- Shopping cart operations
-- Order processing and tracking
-- Inventory management
-- Product reviews and ratings
-- Admin dashboard capabilities
-
-### 💳 Payment Processing
-- Stripe payment integration
-- Secure webhook handling
-- Payment status tracking
-- Refund processing
+## Features
+- User authentication (JWT)
+- Product management
+- Payment processing (Stripe)
+- Email notifications
+- File uploads (Cloudinary)
+- Real-time notifications (Socket.IO)
 - Multi-currency support
 
 ### 📧 Communication Services
@@ -851,7 +812,7 @@ DEBUG=true
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed 
 
 ---
 
