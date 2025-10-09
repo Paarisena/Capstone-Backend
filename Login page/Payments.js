@@ -119,9 +119,11 @@ payments.post('/confirm-payment', async (req, res) => {
 // Webhook endpoint for Stripe events
 payments.post('/webhook', async (req, res) => {
     console.log('🎯 WEBHOOK CALLED!');
-    console.log('Headers:', req.headers);
-    console.log('Body type:', typeof req.body);
-    console.log('Body is Buffer:', Buffer.isBuffer(req.body));
+    console.log('📍 URL:', req.url);
+    console.log('🔤 Content-Type:', req.headers['content-type']);
+    console.log('🔍 Stripe-Signature:', req.headers['stripe-signature'] ? 'Present' : 'Missing');
+    console.log('📦 Body type:', typeof req.body);
+    console.log('🔢 Body length:', req.body ? req.body.length : 'No body');
     
     const sig = req.headers['stripe-signature'];
     let event;
