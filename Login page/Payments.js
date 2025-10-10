@@ -22,7 +22,7 @@ payments.post('/create-payment-intent', async (req, res) => {
 
         // Create payment intent with Stripe
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(amount * 100), // Stripe expects cents
+            amount: Math.round(amount * 100), 
             currency: currency.toLowerCase(),
             metadata: {
                 userId,
