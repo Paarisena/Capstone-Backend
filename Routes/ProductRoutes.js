@@ -12,7 +12,7 @@ ProductRouter.put('/edit/:id',adminAuth, editProduct);
 ProductRouter.get('/public-products', listPublicProducts);
 ProductRouter.post('/profile',adminAuth,addProfile);
 ProductRouter.get('/userProfile',adminAuth,fetchProfile);
-ProductRouter.delete('/delete/:id', deleteProduct);
+ProductRouter.delete('/delete/:id',adminAuth, deleteProduct);
 ProductRouter.post('/cart/add', addToCart);
 ProductRouter.put('/cart/update/:itemId', updateCart);
 ProductRouter.get('/cart', getUserCart);
