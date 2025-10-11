@@ -10,8 +10,8 @@ ProductRouter.post('/addProducts',adminAuth,upload.fields([{name:'image1', maxCo
 ProductRouter.get('/products',adminAuth, listProducts);
 ProductRouter.put('/edit/:id',adminAuth, editProduct);
 ProductRouter.get('/public-products', listPublicProducts);
-ProductRouter.post('/profile',adminAuth, addProfile);
-ProductRouter.get('/userProfile',adminAuth, fetchProfile);
+ProductRouter.post('/profile',addProfile);
+ProductRouter.get('/userProfile',fetchProfile);
 ProductRouter.delete('/delete/:id', deleteProduct);
 ProductRouter.post('/cart/add', addToCart);
 ProductRouter.put('/cart/update/:itemId', updateCart);
