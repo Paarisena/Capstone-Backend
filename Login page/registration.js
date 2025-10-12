@@ -7,7 +7,7 @@ import { v2 as cloudinary } from "cloudinary"
 import cloudinaryConfig from "../Config/Cloudinary.js"
 import brevo from'@getbrevo/brevo'
 import crypto from "crypto"
-import { sendEmail, sendAdminResetEmail, sendLoginVerificationEmail, passwordSuccessEmail } from "./Dashboard.js"
+import { sendEmail, sendAdminResetEmail, sendLoginVerificationEmail, passwordSuccessEmail, verificationSuccess } from "./Dashboard.js"
 
 dotenv.config()
 
@@ -216,8 +216,6 @@ registration.post('/verify-login', async (req, res) => {
                 message: 'User not found'
             });
         }
-
-
         // Check if code needs to be regenerated
         if (!existingUser.loginVerificationExpires || 
             existingUser.loginVerificationExpires < Date.now()) {
@@ -251,12 +249,34 @@ registration.post('/verify-login', async (req, res) => {
                 message: 'Invalid or expired verification code'
             });
         }
-
         // Update verification status and clear verification fields
         existingUser.isEmailVerified = true;
         existingUser.loginVerificationCode = undefined;
         existingUser.loginVerificationExpires = undefined;
         await existingUser.save();
+
+        if(isAdmin){
+            await verificationSuccess(
+                existingUser.email,
+                "Admin Verification Successful",
+                existingUser.name,
+                
+            )
+        }else{
+            await verificationSuccess(
+                existingUser.email,
+                "User Verification Successful",
+                existingUser.name,
+                isAdmin
+            )
+        }
+
+        
+
+        return res.status(200).json({
+        success: true,
+         message: `${isAdmin ? 'Admin' : 'User'} email has been Verified successfully`
+    });
 
         // Generate JWT token for verified user
         const token = jwt.sign(
@@ -270,12 +290,6 @@ registration.post('/verify-login', async (req, res) => {
             { expiresIn: "1d" }
         );
 
-        return res.status(200).json({
-            success: true,
-            message: 'Email verified successfully',
-            token,
-            userId: existingUser._id
-        });
 
     } catch (error) {
         console.error('Verification error:', error);
