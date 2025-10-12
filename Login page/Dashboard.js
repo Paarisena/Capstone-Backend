@@ -487,6 +487,42 @@ const sendVerificationEmailUser = async (to, subject, recipientName = '', verifi
     }
 };
 
+const verificationSuccess = async (to, subject, recipientName = '') => {
+    try {
+        const sendSmtpEmail = new brevo.SendSmtpEmail()
+        sendSmtpEmail.sender = {
+            name: process.env.SENDER_NAME || 'Art Vista Gallery',
+            email: process.env.SENDER_EMAIL || 'noreply@artvista.com'
+        }
+        sendSmtpEmail.to = [{
+            email: to,
+            name: recipientName || to.split('@')[0]
+        }]
+        sendSmtpEmail.subject = subject
+        sendSmtpEmail.htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333; text-align: center;">Art Vista Gallery</h2>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #28a745;">
+                    <h3 style="color: #444;">Hello ${recipientName},</h3>
+                    <div style="background-color: #e8f5e9; padding: 15px; border-radius: 5px; margin
+                    <p style="color: #2e7d32; margin: 0;">
+                        <strong>Success!</strong> Your email has been verified successfully.
+                    </p>
+                    </div>
+                    <p style="color: #666;">You can now log in and start exploring our collection.</p>
+                    <p style="color: #999; font-size: 14px; margin-top: 20px;">Thank you for being a valued member of Art Vista Gallery.</p>
+                </div>
+            </div>
+        `
+        const response = await apiInstance.sendTransacEmail(sendSmtpEmail)
+        console.log('Verification success email sent successfully:', response)
+        return { success: true, messageId: response.messageId }
+    } catch (error) {
+        console.error('Error sending verification success email:', error)
+        return { success: false, error: error.message }
+
+    }
+}
 
 
-export {addProduct,listProducts,deleteProduct, singleProduct, reviewProduct, listPublicProducts, editProduct, addProfile, fetchProfile, sendEmail, sendAdminResetEmail,passwordSuccessEmail, sendLoginVerificationEmail, sendVerificationEmailUser}
+export {addProduct,listProducts,deleteProduct, singleProduct, reviewProduct, listPublicProducts, editProduct, addProfile, fetchProfile, sendEmail, sendAdminResetEmail,passwordSuccessEmail, sendLoginVerificationEmail, sendVerificationEmailUser, verificationSuccess}
