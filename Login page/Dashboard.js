@@ -66,7 +66,7 @@ const addProduct = async(req, res) =>{
 
 const listProducts = async(req, res) =>{
     try{
-        const adminId = req.user && req.user.id;
+        const adminId = req.user.id || req.query.adminId;
         console.log("Admin ID:", adminId);
         const products = await Database.find({createdBy:adminId})
         res.json({success:true,products})
