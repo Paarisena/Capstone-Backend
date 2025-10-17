@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { user, Database } from "../DB/model.js";
+import { user, Database, Order } from "../DB/model.js"; // Add Order import
 
 
 // add products to user cart
@@ -117,5 +117,113 @@ const deleteFromCart = async (req, res) => {
     }
 };
 
+const directPurchase = async (req, res) => {
+    try {
+        const { itemId, userId, quantity = 1, shippingAddress } = req.body;
+        
+        console.log("🔍 DirectPurchase Debug:");
+        console.log("Request body:", req.body);
+        console.log("userId:", userId);
+        console.log("itemId:", itemId);
+        console.log("userId type:", typeof userId);
+        
+        // Validate inputs
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            console.log("❌ No userId provided");
+            return res.json({ success: false, message: "User ID is required" });
+        }
+        
+    
+        
+        if (!mongoose.Types.ObjectId.isValid(itemId)) {
+            console.log("❌ Invalid itemId format:", itemId);
+            return res.json({ success: false, message: "Invalid product ID format" });
+        }
 
-export { addToCart, updateCart, getUserCart, deleteFromCart };
+        // Find user and product
+        const userData = await user.findById(userId);
+        if (!userData) {
+            console.log("❌ User not found with ID:", userId);
+            return res.json({ success: false, message: "User not found" });
+        }
+        
+        const product = await Database.findById(itemId);
+        if (!product) {
+            console.log("❌ Product not found with ID:", itemId);
+            return res.json({ success: false, message: "Product not found" });
+        }
+
+        console.log("✅ User found:", userData.email);
+        console.log("✅ Product found:", product.productName);
+
+        // Calculate purchase details
+        const unitPrice = parseFloat(product.Price);
+        const totalAmount = unitPrice * quantity;
+
+        // Create new order
+        const newOrder = new Order({
+            orderId: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            userId: userId,
+            productId: itemId,
+            productName: product.productName,
+            productImage: product.Image ? product.Image[0] : null,
+            quantity: quantity,
+            unitPrice: unitPrice,
+            totalAmount: totalAmount,
+            shippingAddress: shippingAddress || "To be provided at checkout",
+            orderStatus: "confirmed",
+            paymentStatus: "pending",
+            estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
+
+        // Save the order
+        await newOrder.save();
+
+        console.log("✅ Order created successfully:", newOrder.orderId);
+
+        // Return success with order details
+        res.json({ 
+            success: true, 
+            message: "Direct purchase successful!", 
+            order: {
+                orderId: newOrder.orderId,
+                productName: newOrder.productName,
+                totalAmount: newOrder.totalAmount,
+                orderStatus: newOrder.orderStatus,
+                estimatedDelivery: newOrder.estimatedDelivery
+            },
+            productDetails: product
+        });
+
+    } catch (error) {
+        console.error("❌ DirectPurchase Error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getUserOrders = async (req, res) => {
+    try {
+        const { userId } = req.query;
+        
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.json({ success: false, message: "Invalid userId" });
+        }
+
+        const userData = await user.findById(userId);
+        if (!userData) return res.json({ success: false, message: "User not found" });
+
+        const orders = userData.orders || [];
+        
+        res.json({ 
+            success: true, 
+            orders: orders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+
+export { addToCart, updateCart, getUserCart, deleteFromCart, directPurchase, getUserOrders };

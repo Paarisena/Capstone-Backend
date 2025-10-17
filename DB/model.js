@@ -292,4 +292,67 @@ paymentSchema.pre('save', function (next) {
 
 const payment = new mongoose.model("Payment", paymentSchema, "Payments");
 
-export {user, admin, Database, ReviewDatabase, profile, Verification, payment}
+
+const orderSchema = new mongoose.Schema({
+    orderId: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+        required: true
+    },
+    productId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Database",
+        required: true
+    },
+    productName: {
+        type: String,
+        required: true
+    },
+    productImage: {
+        type: String
+    },
+    quantity: {
+        type: Number,
+        required: true,
+        min: 1
+    },
+    unitPrice: {
+        type: Number,
+        required: true
+    },
+    totalAmount: {
+        type: Number,
+        required: true
+    },
+    shippingAddress: {
+        type: String,
+        required: true
+    },
+    orderStatus: {
+        type: String,
+        enum: ['confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
+        default: 'confirmed'
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['pending', 'completed', 'failed', 'refunded'],
+        default: 'pending'
+    },
+    orderDate: {
+        type: Date,
+        default: Date.now
+    },
+    estimatedDelivery: {
+        type: Date
+    }
+});
+
+const Order = new mongoose.model("Order", orderSchema, "Orders");
+
+
+export {user, admin, Database, ReviewDatabase, profile, Verification, payment, Order}

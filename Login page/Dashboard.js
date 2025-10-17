@@ -183,14 +183,25 @@ const reviewProduct = async(req,res) =>{
 
 const addProfile = async (req, res) => {
     try {
-        const {id} = req.params;
         const userId = req.user && req.user.id;
         console.log("userId from req.user:", userId);
+        
+        // Check if user is authenticated
+        if (!userId) {
+            return res.status(401).json({ 
+                success: false, 
+                message: "Authentication required. Please log in." 
+            });
+        }
+
         const { name, DOB, email, phone, address } = req.body;
 
         // Validate required fields before DB call
         if (!name || !DOB || !email || !phone || !address) {
-            return res.status(400).json({ message: "Missing required fields" });
+            return res.status(400).json({ 
+                success: false, 
+                message: "Missing required fields" 
+            });
         }
 
         // Update if exists, else create (one profile per user)
@@ -202,19 +213,50 @@ const addProfile = async (req, res) => {
 
         res.status(200).json({ success: true, profile: prof });
     } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: "Internal server error" });
+        console.error('Error in addProfile:', err);
+        res.status(500).json({ 
+            success: false, 
+            message: "Internal server error" 
+        });
     }
 };
 
-const fetchProfile = async (req,res) =>{
-    const response = await profile.findOne({ userId: req.user.id });
-    console.log("Fetched profile:", response);
-    if (!response) {
-        return res.status(404).json({ success: false, message: "Profile not found" });
+const fetchProfile = async (req, res) => {
+    try {
+        // Extract user ID from the authenticated token
+        const userId = req.user && req.user.id;
+        console.log("User ID from token:", userId);
+        
+        if (!userId) {
+            return res.status(401).json({ 
+                success: false, 
+                message: "Authentication required. Please log in." 
+            });
+        }
+
+        const response = await profile.findOne({ userId });
+        console.log("Fetched profile:", response);
+        
+        if (!response) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Profile not found" 
+            });
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            profile: response 
+        });
+        
+    } catch (error) {
+        console.error('Error in fetchProfile:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Internal server error" 
+        });
     }
-    res.status(200).json({ success: true, profile: response });
-}
+};
 
 const sendEmail = async (to, subject, recipientName = '', resetLink = '') => {
   try {
@@ -335,8 +377,6 @@ const passwordSuccessEmail = async (to, subject, recipientName = '') => {
         sendSmtpEmail.subject = subject;
         sendSmtpEmail.htmlContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-`;
-        sendSmtpEmail.htmlContent += `
                 <h2 style="color: #333; text-align: center;">Art Vista Gallery</h2>
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #28a745;">
                     <h3 style="color: #444;">Hello ${recipientName},</h3>
