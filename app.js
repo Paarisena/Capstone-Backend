@@ -16,7 +16,6 @@ import ProductRouter from "./Routes/ProductRoutes.js"
 import path from "path"
 import{ fileURLToPath } from "url"
 
-
 dotenv.config()
 cloudinaryConfig()
 const app = express()
