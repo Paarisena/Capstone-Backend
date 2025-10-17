@@ -216,6 +216,7 @@ registration.post('/verify-login', async (req, res) => {
                 message: 'User not found'
             });
         }
+
         // Check if code needs to be regenerated
         if (!existingUser.loginVerificationExpires || 
             existingUser.loginVerificationExpires < Date.now()) {
@@ -249,20 +250,21 @@ registration.post('/verify-login', async (req, res) => {
                 message: 'Invalid or expired verification code'
             });
         }
+
         // Update verification status and clear verification fields
         existingUser.isEmailVerified = true;
         existingUser.loginVerificationCode = undefined;
         existingUser.loginVerificationExpires = undefined;
         await existingUser.save();
 
+        // Send verification success email
         if(isAdmin){
             await verificationSuccess(
                 existingUser.email,
                 "Admin Verification Successful",
                 existingUser.name,
-                
             )
-        }else{
+        } else {
             await verificationSuccess(
                 existingUser.email,
                 "User Verification Successful",
@@ -271,14 +273,7 @@ registration.post('/verify-login', async (req, res) => {
             )
         }
 
-        
 
-        return res.status(200).json({
-        success: true,
-         message: `${isAdmin ? 'Admin' : 'User'} email has been Verified successfully`
-    });
-
-        // Generate JWT token for verified user
         const token = jwt.sign(
             { 
                 id: existingUser._id,
@@ -289,7 +284,12 @@ registration.post('/verify-login', async (req, res) => {
             process.env.SECRET_TOKEN,
             { expiresIn: "1d" }
         );
-
+        return res.status(200).json({
+            success: true,
+            message: `${isAdmin ? 'Admin' : 'User'} email has been verified successfully`,
+            token,
+            userId: existingUser._id
+        });
 
     } catch (error) {
         console.error('Verification error:', error);
@@ -552,84 +552,7 @@ registration.post('/reset-password', async (req, res) => {
   }
 });
 
-// registration.post('/verify-login', async (req, res) => {
-//     const { email, isAdmin } = req.body;
-    
-//     try {
-//         const UserModel = isAdmin ? admin : user;
-//         const existingUser = await UserModel.findOne({ email });
-        
-//         if (!existingUser) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: 'User not found'
-//             });
-//         }
 
-//         // Generate 6-digit verification code
-//         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        
-//         // Save verification code to user document
-//         existingUser.loginVerificationCode = verificationCode;
-//         existingUser.loginVerificationExpires = Date.now() + 600000; // 10 minutes
-//         await existingUser.save();
-
-//         // Send verification email
-//         const emailResult = await sendLoginVerificationEmail(
-//             existingUser.email,
-//             'Login Verification',
-//             existingUser.name,
-//             verificationCode
-//         );
-
-//         if (!emailResult.success) {
-//             return res.status(500).json({
-//                 success: false,
-//                 message: 'Failed to send verification code'
-//             });
-//         }
-
-//         return res.status(200).json({
-//             success: true,
-//             message: 'Verification code sent successfully'
-//         });
-
-//     } catch (error) {
-//         console.error('Login verification error:', error);
-//         return res.status(500).json({
-//             success: false,
-//             message: 'An error occurred during verification'
-//         });
-//     }
-// });
-
-registration.post('/confirm-login', async (req, res) => {
-    const { email, verificationCode, isAdmin } = req.body;
-    
-    if (!email || !verificationCode) {
-        return res.status(400).json({ success: false, message: 'Email and verification code are required' });
-    }
-    try {
-        const UserModel = isAdmin ? admin : user;
-        const existingUser = await UserModel.findOne({ email });
-        if (!existingUser) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        // Check if code matches and is not expired
-        if (existingUser.loginVerificationCode !== verificationCode ||
-            !existingUser.loginVerificationExpires ||
-            existingUser.loginVerificationExpires < Date.now()) {
-            return res.status(400).json({ success: false, message: 'Invalid or expired verification code' });
-        }
-
-        // If everything is valid, proceed with login
-        return res.status(200).json({ success: true, message: 'Login successful' });
-
-    } catch (error) {
-        console.error('Login confirmation error:', error);
-        return res.status(500).json({ success: false, message: 'An error occurred during login confirmation' });
-    }
-});
 
 export default registration
 
