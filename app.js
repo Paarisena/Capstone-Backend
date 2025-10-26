@@ -80,7 +80,9 @@ const __dirname = path.dirname(__filename)
 
 app.use(express.static(path.join(__dirname,"uploads")))
 app.use(cors( {origin: ["http://localhost:5173", "https://avgallery.shop",
-"https://www.avgallery.shop","https://avgallery.netlify.app"],credentials: true}))
+"https://www.avgallery.shop","https://avgallery.netlify.app"],
+methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],credentials: true}))
 app.use('/api/payments/webhook', express.raw({type: 'application/json'}))
 app.use(express.json({ limit: '10mb' })) // Reduced from 40mb for security
 
