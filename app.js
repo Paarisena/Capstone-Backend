@@ -15,6 +15,7 @@ import payments from "./Login page/Payments.js"
 import ProductRouter from "./Routes/ProductRoutes.js"
 import path from "path"
 import{ fileURLToPath } from "url"
+import chalk from "chalk"
 
 dotenv.config()
 cloudinaryConfig()
@@ -103,6 +104,6 @@ await connecttodb()
 await mongooseconnect()
 
 server.listen(PORT,()=>{
-    console.log("Server listening on port " + PORT)
-    console.log("WebSocket server ready for real-time updates")
+    console.log(chalk.blue("Server listening on port " + PORT))
+    console.log(chalk.green("WebSocket server ready for real-time updates"))
     })
