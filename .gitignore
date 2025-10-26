@@ -74,12 +74,4 @@ uploads/
 # PM2 ecosystem file
 ecosystem.config.js
 .env
-.test.jsx
-tests/authentication.test.js
-tests/authSimple.test.js
-tests/basic.test.js
-tests/database.test.js
-tests/endToEnd.test.js
-tests/payment.test.js
-tests/ProductRoutes.test.js
-tests/setup.js
+
