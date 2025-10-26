@@ -1,6 +1,6 @@
 export default {
   testEnvironment: 'node',
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  setupFilesAfterEnv: ['./tests/setup.js'],
   collectCoverageFrom: [
     '**/*.js',
     '!node_modules/**',
@@ -11,5 +11,9 @@ export default {
     '<rootDir>/tests/**/*.test.js',
     '<rootDir>/**/*.test.js'
   ],
-  transform: {}
+  transform: {
+    '^.+\\.js$': 'babel-jest'
+  },
+  moduleFileExtensions: ['js', 'json'],
+  verbose: true
 };
