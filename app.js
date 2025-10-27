@@ -1,4 +1,6 @@
 import express from "express"
+import cookieParser from "cookie-parser"
+import session from "express-session"
 import dotenv from "dotenv"
 import cors from "cors"
 import helmet from "helmet"
@@ -34,41 +36,57 @@ app.set('trust proxy', 1);
 
 // Configure CORS early
 app.use(cors({
-    origin: function(origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            console.log('Blocked by CORS:', origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Accept',
+        'Origin',
+        'X-Requested-With'
+    ],
+    exposedHeaders: ['Set-Cookie'],
     credentials: true,
+    maxAge: 86400, // 24 hours in seconds
     optionsSuccessStatus: 204
 }));
 
+app.use(cookieParser());
+
 // Add preflight handler
 app.options('*', cors());
+
+app.use(session({
+    secret: process.env.SECRET_TOKEN,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: true,
+        sameSite: 'none',
+        domain: '.azurewebsites.net',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
 
 // Security middleware
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
-            defaultSrc: ["'self'"],
+            defaultSrc: ["'self'", "https://*.azurewebsites.net"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
-            scriptSrc: ["'self'"],
-            connectSrc: ["'self'", "https://api.stripe.com",
-                                   "https://*.azurewebsites.net",
-                                   "http://localhost:5173",
-                                   "https://avgallery.shop",
-                                   "https://www.avgallery.shop",
-                                   "https://avgallery.netlify.app"
-            ]
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            connectSrc: ["'self'", 
+                "https://api.stripe.com",
+                "https://*.azurewebsites.net",
+                ...allowedOrigins
+            ],
+            frameSrc: ["'self'", "https://*.stripe.com"]
         }
-    }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 // Rate limiting for authentication endpoints
@@ -133,6 +151,22 @@ app.use("/api/payments",payments)
 
 await connecttodb()
 await mongooseconnect()
+
+app.use((err, req, res, next) => {
+    console.error(chalk.red('Error:', err.stack));
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Internal Server Error',
+        error: process.env.NODE_ENV === 'development' ? err.stack : {}
+    });
+});
+
+app.use('*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        message: 'Route not found'
+    });
+});
 
 server.listen(PORT,()=>{
     console.log(chalk.blue("Server listening on port " + PORT))
