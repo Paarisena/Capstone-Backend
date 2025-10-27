@@ -24,7 +24,10 @@ maxLogFiles: 100
 maxLogFileSizeInKB: 128
 
 # Configure node process
+nodeProcessCommandLine: "node"
+loggingEnabled: true
+debuggingEnabled: true
+devErrorsEnabled: true
+node_env: production
 nodeProcessCountPerApplication: 1
 maxConcurrentRequestsPerProcess: 1024
-maxNamedPipeConnectionRetry: 100
-namedPipeConnectionRetryDelay: 250
