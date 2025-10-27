@@ -18,12 +18,41 @@ const localclient = new MongoClient(localurl)
 const db = client.db(db_name)
 const localdb = localclient.db(db_name)
 
-const connecttodb = async() =>{
-    try{
+const connecttodb = async() => {
+    try {
+        // Log connection attempt
+        console.log("MongoDB Connection Attempt...");
+        
+        // Verify environment variables
+        const envVars = {
+            DB_CLUSTER: process.env.DB_CLUSTER,
+            DB_CLUSTER_NAME: process.env.DB_CLUSTER_NAME,
+            DB_USER: process.env.DB_USER,
+            DB_PASSWORD: process.env.DB_PASSWORD?.slice(0, 3) + '***'
+        };
+        console.log("Environment variables:", envVars);
+        
+        // Test connection
         await client.connect();
-        console.log("DB Connected Success")
-    }catch (err){
-        console.log("Error in MongoDB" + err)
+        
+        // Verify database connection
+        await db.command({ ping: 1 });
+        
+        console.log(`✅ MongoDB Connected Successfully to ${db_name}`);
+        return true;
+    } catch (err) {
+        console.error("❌ MongoDB Connection Error");
+        console.error("Error Type:", err.name);
+        console.error("Error Message:", err.message);
+        
+        if (err.name === 'MongoServerError') {
+            console.error("Authentication failed. Check credentials.");
+        } else if (err.name === 'MongoNetworkError') {
+            console.error("Network error. Check connectivity.");
+        }
+        
+        // Rethrow to be handled by Express error handler
+        throw err;
     }
 }
 
