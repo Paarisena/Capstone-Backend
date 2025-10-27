@@ -21,6 +21,9 @@ import chalk from "chalk"
 dotenv.config()
 cloudinaryConfig()
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
 // Define allowed origins once at the top after imports
 const allowedOrigins = [
     "http://localhost:5173", 
@@ -126,9 +129,6 @@ const io = new Server(server, {
         credentials: true
     }
 });
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 app.set('io', io);
 
