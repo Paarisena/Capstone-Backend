@@ -9,11 +9,12 @@ import brevo from'@getbrevo/brevo'
 import crypto from "crypto"
 import { sendEmail, sendAdminResetEmail, sendLoginVerificationEmail, passwordSuccessEmail, verificationSuccess } from "./Dashboard.js"
 
+
+const registration = express.Router()
+
 dotenv.config()
 
 cloudinaryConfig();
-
-const registration = express.Router()
 
 const apiInstance = new brevo.TransactionalEmailsApi();
 const apiKey = apiInstance.authentications['apiKey'];

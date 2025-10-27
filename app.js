@@ -118,6 +118,13 @@ app.use('/api', apiLimiter);
 // Sanitize user input
 app.use(mongoSanitize());
 
+app.use("/api",regis)
+
+app.use("/api",ProductRouter)
+
+app.use("/api/payments",payments)
+
+
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
