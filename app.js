@@ -19,10 +19,37 @@ import chalk from "chalk"
 
 dotenv.config()
 cloudinaryConfig()
-const app = express()
 
+// Define allowed origins once at the top after imports
+const allowedOrigins = [
+    "http://localhost:5173", 
+    "https://avgallery.shop",
+    "https://www.avgallery.shop",
+    "https://avgallery.netlify.app",
+    "https://avgallery-edhjaqhnesd4apd0.canadacentral-01.azurewebsites.net" // Remove trailing slash
+];
+
+const app = express()
 app.set('trust proxy', 1);
-const PORT = process.env.PORT || 8000;
+
+// Configure CORS early
+app.use(cors({
+    origin: function(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log('Blocked by CORS:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true,
+    optionsSuccessStatus: 204
+}));
+
+// Add preflight handler
+app.options('*', cors());
 
 // Security middleware
 app.use(helmet({
@@ -69,7 +96,7 @@ app.use(mongoSanitize());
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:5173", "https://avgallery.shop","https://www.avgallery.shop","https://avgallery.netlify.app","https://avgallery-edhjaqhnesd4apd0.canadacentral-01.azurewebsites.net/"],
+        origin: allowedOrigins,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         credentials: true
     }
@@ -79,10 +106,6 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 app.use(express.static(path.join(__dirname,"uploads")))
-app.use(cors( {origin: ["http://localhost:5173", "https://avgallery.shop",
-"https://www.avgallery.shop","https://avgallery.netlify.app","https://avgallery-edhjaqhnesd4apd0.canadacentral-01.azurewebsites.net/"],
-methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],credentials: true}))
 app.use('/api/payments/webhook', express.raw({type: 'application/json'}))
 app.use(express.json({ limit: '10mb' })) // Reduced from 40mb for security
 
