@@ -41,7 +41,7 @@ const allowedOrigins = [
     "http://localhost:5173", 
     "https://avgallery.shop",
     "https://www.avgallery.shop",
-    "https://avgallery.shop",
+    "https://avgallery.netlify.app"
 ];
 
 const app = express()
