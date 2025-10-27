@@ -34,6 +34,8 @@ const allowedOrigins = [
 const app = express()
 app.set('trust proxy', 1);
 
+const PORT = process.env.PORT
+
 // Configure CORS early
 app.use(cors({
     origin: allowedOrigins,
