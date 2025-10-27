@@ -9,7 +9,6 @@ import rateLimit from "express-rate-limit"
 import { createServer } from "http"
 import { Server } from "socket.io"
 import cloudinaryConfig from "./Config/Cloudinary.js"
-import jwt from "jsonwebtoken"
 import mongooseconnect from "./DB/Moongoose-connection.js"
 import connecttodb from "./DB/mongoDB.js"
 import regis from "./Login page/registration.js"
@@ -118,11 +117,15 @@ app.use('/api', apiLimiter);
 // Sanitize user input
 app.use(mongoSanitize());
 
-app.use("/api",regis)
 
-app.use("/api",ProductRouter)
+app.use(express.static(path.join(__dirname,"uploads")))
+app.use('/api/payments/webhook', express.raw({type: 'application/json'}))
+app.use(express.json({ limit: '10mb' })) 
 
-app.use("/api/payments",payments)
+
+app.use("/api", regis)
+app.use("/api", ProductRouter)
+app.use("/api/payments", payments)
 
 
 const server = createServer(app);
@@ -137,10 +140,6 @@ const io = new Server(server, {
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-app.use(express.static(path.join(__dirname,"uploads")))
-app.use('/api/payments/webhook', express.raw({type: 'application/json'}))
-app.use(express.json({ limit: '10mb' })) // Reduced from 40mb for security
-
 app.set('io', io);
 
 io.on('connection', (socket) => {
@@ -150,12 +149,6 @@ io.on('connection', (socket) => {
         console.log('User disconnected:', socket.id);
     });
 });
-
-app.use("/api",regis)
-
-app.use("/api",ProductRouter)
-
-app.use("/api/payments",payments)
 
 // Initialize function
 const initializeApp = async () => {
