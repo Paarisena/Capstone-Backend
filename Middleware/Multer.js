@@ -1,10 +1,19 @@
 import multer from 'multer';
 import crypto from 'crypto';
 import path from 'path';
+import { mkdirp } from 'mkdirp';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadDir = path.join(__dirname, '..', 'uploads');
+
+// Ensure uploads directory exists
+await mkdirp(uploadDir);
 
 const storage = multer.diskStorage({
   destination: function (req, file, callback) {
-    callback(null, './uploads/');
+    callback(null, uploadDir);
   },
   filename: function (req, file, callback) {
     // Generate secure filename to prevent path traversal
