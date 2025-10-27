@@ -60,7 +60,13 @@ app.use(helmet({
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
             scriptSrc: ["'self'"],
-            connectSrc: ["'self'", "https://api.stripe.com"]
+            connectSrc: ["'self'", "https://api.stripe.com",
+                                   "https://*.azurewebsites.net",
+                                   "http://localhost:5173",
+                                   "https://avgallery.shop",
+                                   "https://www.avgallery.shop",
+                                   "https://avgallery.netlify.app"
+            ]
         }
     }
 }));
