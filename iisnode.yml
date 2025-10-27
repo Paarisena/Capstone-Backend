@@ -1,0 +1,30 @@
+# nodeProcessCommandLine: "C:\Program Files\nodejs\node.exe"
+
+# Enable node debugging
+debugPort: 5858
+
+# Enable logging
+loggingEnabled: true
+
+# Directory for storing logs
+logDirectory: iisnode
+
+# Node environment
+node_env: production
+
+# Enable debugging
+debuggingEnabled: true
+
+# Enable dev errors
+devErrorsEnabled: true
+
+# Configure logging
+logFiles: 100
+maxLogFiles: 100
+maxLogFileSizeInKB: 128
+
+# Configure node process
+nodeProcessCountPerApplication: 1
+maxConcurrentRequestsPerProcess: 1024
+maxNamedPipeConnectionRetry: 100
+namedPipeConnectionRetryDelay: 250
