@@ -39,9 +39,7 @@ const __dirname = path.dirname(__filename)
 // Define allowed origins once at the top after imports
 const allowedOrigins = [
     "http://localhost:5173", 
-    "https://avgallery.shop",
-    "https://www.avgallery.shop",
-    "https://avgallery.netlify.app"
+    "https://www.avgallery.shop"
 ];
 
 const app = express()
