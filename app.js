@@ -21,6 +21,18 @@ import chalk from "chalk"
 dotenv.config()
 cloudinaryConfig()
 
+// Debug environment variables
+console.log('Environment:', {
+    NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
+    DB_CLUSTER: process.env.DB_CLUSTER ? 'Set' : 'Not Set',
+    DB_CLUSTER_NAME: process.env.DB_CLUSTER_NAME ? 'Set' : 'Not Set',
+    DB_USER: process.env.DB_USER ? 'Set' : 'Not Set',
+    CLOUDINARY_NAME: process.env.CLOUDINARY_NAME ? 'Set' : 'Not Set',
+    BREVO_API_KEY: process.env.BREVO_API_KEY ? 'Set' : 'Not Set',
+    STRIPE_API_KEY: process.env.STRIPE_API_KEY ? 'Set' : 'Not Set'
+});
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -160,11 +172,21 @@ const initializeApp = async () => {
 initializeApp().catch(console.error);
 
 app.use((err, req, res, next) => {
-    console.error(chalk.red('Error:', err.stack));
+    console.error(chalk.red('🚨 Error occurred:'));
+    console.error(chalk.red('Error name:', err.name));
+    console.error(chalk.red('Error message:', err.message));
+    console.error(chalk.red('Error stack:', err.stack));
+    console.error(chalk.red('Request path:', req.path));
+    console.error(chalk.red('Request method:', req.method));
+    
     res.status(err.status || 500).json({
         success: false,
         message: err.message || 'Internal Server Error',
-        error: process.env.NODE_ENV === 'development' ? err.stack : {}
+        error: process.env.NODE_ENV === 'development' ? {
+            name: err.name,
+            message: err.message,
+            stack: err.stack
+        } : {}
     });
 });
 

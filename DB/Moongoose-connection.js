@@ -14,11 +14,24 @@ const cloudurl = `mongodb+srv://${db_user}:${db_password}@${db_cluster}/${db_nam
 
 const mongooseconnect = async()=>{
     try{
-    await mongoose.connect(cloudurl);
-    console.log("Mongoose Connection Established")
-} catch(err){
-    console.log("Mongoose connection error" +err)
-}
+        console.log('Attempting MongoDB connection...');
+        console.log('DB Cluster:', process.env.DB_CLUSTER ? 'Set' : 'Not Set');
+        console.log('DB Name:', process.env.DB_CLUSTER_NAME ? 'Set' : 'Not Set');
+        
+        await mongoose.connect(cloudurl, {
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        });
+        console.log("✅ Mongoose Connection Established Successfully");
+    } catch(err){
+        console.error("❌ MongoDB Connection Error:");
+        console.error("Error name:", err.name);
+        console.error("Error message:", err.message);
+        console.error("Full error:", err);
+        
+        // Rethrow the error to be handled by the main error handler
+        throw new Error(`MongoDB Connection Failed: ${err.message}`);
+    }
 }
 
 
