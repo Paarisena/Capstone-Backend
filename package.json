@@ -7,7 +7,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node app.js",
+    "start": "node server.js",
     "build": "npm install -g pnpm && pnpm install --no-frozen-lockfile",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
