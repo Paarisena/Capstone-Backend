@@ -27,14 +27,13 @@ const allowedOrigins = [
     "http://localhost:5173", 
     "https://avgallery.shop",
     "https://www.avgallery.shop",
-    "https://avgallery.netlify.app",
-    "https://avgallery-edhjaqhnesd4apd0.canadacentral-01.azurewebsites.net" // Remove trailing slash
+    "https://avgallery.shop",
 ];
 
 const app = express()
 app.set('trust proxy', 1);
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT || process.env.WEBSITES_PORT || 8000
 
 // Configure CORS early
 app.use(cors({
@@ -151,8 +150,24 @@ app.use("/api",ProductRouter)
 
 app.use("/api/payments",payments)
 
-await connecttodb()
-await mongooseconnect()
+// Initialize function
+const initializeApp = async () => {
+    try {
+        await connecttodb();
+        await mongooseconnect();
+        
+        server.listen(PORT, () => {
+            console.log(chalk.blue(`Server listening on port ${PORT}`));
+            console.log(chalk.green("WebSocket server ready for real-time updates"));
+        });
+    } catch (error) {
+        console.error(chalk.red('Failed to initialize app:', error));
+        process.exit(1);
+    }
+};
+
+// Start the application
+initializeApp().catch(console.error);
 
 app.use((err, req, res, next) => {
     console.error(chalk.red('Error:', err.stack));
@@ -170,7 +185,4 @@ app.use('*', (req, res) => {
     });
 });
 
-server.listen(PORT,()=>{
-    console.log(chalk.blue("Server listening on port " + PORT))
-    console.log(chalk.green("WebSocket server ready for real-time updates"))
-    })
+export default app
