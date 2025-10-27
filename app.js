@@ -130,6 +130,11 @@ app.use('/api/payments/webhook', express.raw({type: 'application/json'}))
 app.use(express.json({ limit: '10mb' })) 
 
 
+// Root route handler
+app.get('/', (req, res) => {
+    res.status(200).json({ message: 'AVGallery API is running' });
+});
+
 app.use("/api", regis)
 app.use("/api", ProductRouter)
 app.use("/api/payments", payments)
@@ -180,15 +185,20 @@ app.use((err, req, res, next) => {
     console.error(chalk.red('Error stack:', err.stack));
     console.error(chalk.red('Request path:', req.path));
     console.error(chalk.red('Request method:', req.method));
+    console.error(chalk.red('Request headers:', JSON.stringify(req.headers, null, 2)));
+    console.error(chalk.red('Request body:', JSON.stringify(req.body, null, 2)));
     
+    // Send detailed error in production temporarily for debugging
     res.status(err.status || 500).json({
         success: false,
         message: err.message || 'Internal Server Error',
-        error: process.env.NODE_ENV === 'development' ? {
+        error: {
             name: err.name,
             message: err.message,
-            stack: err.stack
-        } : {}
+            stack: err.stack,
+            path: req.path,
+            method: req.method
+        }
     });
 });
 
