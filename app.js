@@ -36,7 +36,7 @@ console.log('Environment:', {
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// Define allowed origins once at the top after imports
+
 const allowedOrigins = [
     "http://localhost:5173", 
     "https://www.avgallery.shop"
@@ -45,19 +45,18 @@ const allowedOrigins = [
 const app = express()
 app.set('trust proxy', 1);
 
+// Add request logging middleware
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    console.log('Headers:', req.headers);
+    next();
+});
+
 const PORT = process.env.PORT || process.env.WEBSITES_PORT || 8000
 
 // Configure CORS early
 app.use(cors({
-    origin: function(origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if(!origin) return callback(null, true);
-        if(allowedOrigins.indexOf(origin) === -1){
-            var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-    },
+    origin: true, // Allow all origins temporarily for debugging
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type',
