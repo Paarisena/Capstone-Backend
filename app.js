@@ -56,17 +56,7 @@ app.use(cookieParser());
 // Add preflight handler
 app.options('*', cors());
 
-app.use(session({
-    secret: process.env.SECRET_TOKEN,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: true,
-        sameSite: 'none',
-        domain: '.azurewebsites.net',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-}));
+
 
 // Security middleware
 app.use(helmet({
