@@ -1,7 +1,7 @@
 {
   "name": "capstone-backend",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "index.js",
   "type": "module",
   "description": "Capstone Project Backend API",
   
@@ -11,7 +11,7 @@
   },
   
   "scripts": {
-    "start": "node server.js",
+    "start": "node index.js",
     "dev": "node --watch server.js",
     "build": "npm ci --production",
     "test": "echo \"No tests yet\" && exit 0"
