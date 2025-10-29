@@ -1,35 +1,44 @@
 {
-  "name": "backend",
+  "name": "capstone-backend",
   "version": "1.0.0",
   "main": "app.js",
   "type": "module",
+  "description": "Capstone Project Backend API",
+  
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
   },
+  
   "scripts": {
-    "start": "node server.js",
-    "build": "npm install -g pnpm && pnpm install --no-frozen-lockfile",
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "build": "pnpm install --frozen-lockfile",
+    "build:prod": "pnpm install --prod --frozen-lockfile",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "app": "node --watch app.js",
     "update:check": "ncu --format lines",
-    "update:patch": "ncu -u --target patch && npm install",
-    "update:minor": "ncu -u --target minor && npm install",
-    "update:latest": "ncu -u && npm install",
-    "security:audit": "npm audit",
-    "security:fix": "npm audit fix",
-    "deps:outdated": "npm outdated",
-    "maintenance": "npm run update:check && npm run security:audit"
+    "update:patch": "ncu -u --target patch && pnpm install",
+    "update:minor": "ncu -u --target minor && pnpm install",
+    "update:latest": "ncu -u && pnpm install",
+    "security:audit": "pnpm audit",
+    "security:fix": "pnpm audit --fix",
+    "deps:outdated": "pnpm outdated",
+    "maintenance": "pnpm run update:check && pnpm run security:audit",
+    "clean": "rm -rf node_modules pnpm-lock.yaml && pnpm install"
   },
-  "author": "",
+  
+  "author": "Your Name",
   "license": "ISC",
-  "description": "",
+  
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",
-    "bcryptjs": "^2.4.3",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
     "chalk": "^5.6.2",
     "cloudinary": "^2.6.0",
+    "compression": "^1.7.4",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
@@ -37,27 +46,27 @@
     "express": "^4.21.2",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.1.0",
-    "express-server": "^0.5.8",
     "express-session": "^1.18.2",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mkdirp": "^3.0.1",
     "mongodb": "^6.7.0",
     "mongoose": "^8.4.3",
-    "mkdirp": "^3.0.1",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^7.0.9",
     "razorpay": "^2.9.4",
-    "react-toastify": "^11.0.3",
     "socket.io": "^4.8.1",
     "stripe": "^18.5.0",
     "validator": "^13.15.15"
   },
+  
   "devDependencies": {
     "@babel/core": "^7.28.5",
     "@babel/preset-env": "^7.28.5",
     "@testing-library/jest-dom": "^6.9.1",
     "babel-jest": "^30.2.0",
     "jest": "^30.2.0",
+    "nodemon": "^3.1.7",
     "supertest": "^7.1.4"
   }
 }

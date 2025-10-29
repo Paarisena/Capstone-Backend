@@ -2,6 +2,7 @@ import { payment } from "../DB/model.js"
 import express from "express"
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
+import adminAuth from "../Middleware/adminAuth.js";
 
 dotenv.config();
 
@@ -210,14 +211,14 @@ payments.get('/payment/:orderId', async (req, res) => {
         // Fixed: Use findOne with orderId instead of findById
         const paymentRecord = await payment.findOne({ orderId: req.params.orderId })
             .populate('userId', 'name email')
-            .populate('items.productId', 'productName Price');
+            .populate('items.productId', 'productName Price Image');
 
         // If not found by orderId, try by _id (in case it's a MongoDB ObjectId)
         if (!paymentRecord) {
             try {
                 const paymentById = await payment.findById(req.params.orderId)
                     .populate('userId', 'name email')
-                    .populate('items.productId', 'productName Price');
+                    .populate('items.productId', 'productName Price Image');
                 
                 if (paymentById) {
                     return res.json({
@@ -404,5 +405,45 @@ payments.get('/check-status/:paymentIntentId', async (req, res) => {
         });
     }
 });
+
+payments.post('/reorder/:orderId', adminAuth, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const originalOrder = await payment.findOne({ orderId });
+
+        if (!originalOrder) {   
+            return res.status(404).json({
+                success: false,
+                message: 'Original order not found'
+            });
+        }
+        // Create a new order based on the original
+        const newOrder = new payment({
+            userId: originalOrder.userId,
+            amount: originalOrder.amount,
+            currency: originalOrder.currency,
+            paymentMethod: originalOrder.paymentIntentId,
+            paymentStatus: 'Confirmed',
+            items: originalOrder.items
+        });
+
+        await newOrder.save();
+
+        res.json({
+            success: true,
+            message: 'Order reprocessed successfully',
+            order: newOrder
+        });
+
+    } catch (error) {
+        console.error('Error reprocessing order:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to reorder',
+            error: error.message
+        });
+    }
+});     
+
 
 export default payments;

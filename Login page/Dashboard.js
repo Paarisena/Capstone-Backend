@@ -78,6 +78,7 @@ const listProducts = async(req, res) =>{
 
 const listPublicProducts = async(req,res) =>{
     try{
+        res.set('Cache-Control', 'no-store');
         const products = await Database.find({isPublic:true})
         res.json({success:true,products})
     }catch(err){

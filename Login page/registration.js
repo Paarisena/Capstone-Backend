@@ -1,5 +1,5 @@
 import express from "express"
-import * as bcrypt from "bcryptjs"
+import bcrypt from "bcryptjs"
 import { user, admin, ReviewDatabase, Database } from "../DB/model.js"
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
