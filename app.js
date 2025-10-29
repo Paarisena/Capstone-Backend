@@ -52,7 +52,7 @@ app.use((req, res, next) => {
     next();
 });
 
-const PORT = process.env.PORT || process.env.WEBSITES_PORT || 8000
+const PORT = process.env.PORT
 
 // Configure CORS early
 app.use(cors({
@@ -79,14 +79,14 @@ app.use(cookieParser());
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
-            defaultSrc: ["'self'", "https://*.azurewebsites.net"],
+            defaultSrc: ["'self'", "http://localhost:5173"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
             connectSrc: ["'self'", 
                 "https://api.stripe.com",
-                "https://*.azurewebsites.net",
+                "http://localhost:5173",
                 ...allowedOrigins
             ],
             frameSrc: ["'self'", "https://*.stripe.com"]
