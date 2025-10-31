@@ -75,3 +75,25 @@ uploads/
 ecosystem.config.js
 .env
 
+
+
+security-tests/run-security-audit.sh
+intensive-attack-test.ps1
+penetration-tests/test-results.json
+security-audit.json
+penetration-tests/api-security-tests.js
+
+
+
+*security-test*.js
+*attack*.ps1
+*attack*.js
+*intensive*.ps1
+SECURITY_*.md
+SOC_*.md
+OWASP_*.md
+ATTACK_*.md
+VULNERABILITY_*.md
+*_AUDIT_REPORT.md
+*_DASHBOARD.md
+test-security-fix.js

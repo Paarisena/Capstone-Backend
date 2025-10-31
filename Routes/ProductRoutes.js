@@ -13,13 +13,13 @@ ProductRouter.get('/public-products', listPublicProducts);
 ProductRouter.post('/profile',adminAuth,addProfile);
 ProductRouter.get('/userProfile',adminAuth,fetchProfile);
 ProductRouter.delete('/delete/:id',adminAuth, deleteProduct);
-ProductRouter.post('/cart/add', addToCart);
-ProductRouter.put('/cart/update/:itemId', updateCart);
-ProductRouter.get('/cart', getUserCart);
-ProductRouter.delete('/cart/delete/:itemId', deleteFromCart);
-ProductRouter.post('/direct-purchase', directPurchase);
-ProductRouter.get('/user-orders', getUserOrders);
-ProductRouter.post('/send-email', sendEmail);
+ProductRouter.post('/cart/add', adminAuth,addToCart);
+ProductRouter.put('/cart/update/:itemId', adminAuth,updateCart);
+ProductRouter.get('/cart',adminAuth, getUserCart);
+ProductRouter.delete('/cart/delete/:itemId', adminAuth,deleteFromCart);
+ProductRouter.post('/direct-purchase', adminAuth,directPurchase);
+ProductRouter.get('/user-orders', adminAuth,getUserOrders);
+ProductRouter.post('/send-email', adminAuth,sendEmail);
 
 
 export default ProductRouter;
