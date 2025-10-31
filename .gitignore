@@ -76,10 +76,10 @@ ecosystem.config.js
 .env
 
 # Security Testing Files (DO NOT COMMIT)
+security-tests/
+penetration-tests/
 intensive-attack-test.ps1
 security-audit.json
-penetration-tests/
-security-tests/
 *security-test*.js
 *attack*.ps1
 *attack*.js

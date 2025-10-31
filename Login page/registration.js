@@ -7,6 +7,8 @@ import { v2 as cloudinary } from "cloudinary"
 import cloudinaryConfig from "../Config/Cloudinary.js"
 import brevo from'@getbrevo/brevo'
 import crypto from "crypto"
+import mongoose from "mongoose"
+import { sanitizeInput } from "../security-fixes/01-enhanced-error-handling.js"
 import { sendEmail, sendAdminResetEmail, sendLoginVerificationEmail, passwordSuccessEmail, verificationSuccess } from "./Dashboard.js"
 
 
@@ -366,27 +368,78 @@ registration.post('/AdminLogin', async(req, res) => {
 
 registration.post('/products/:id/reviews', async (req, res) => {
     const id = req.params.id;
-    const {name, rating, comment} = req.body;
-    if (!name || name.trim() === "") {
-        return res.status(400).json({ message: "Reviewer name is required" });
+    let {name, rating, comment} = req.body;
+    
+    // ✅ Validate product ID is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ 
+            success: false,
+            message: "Invalid product ID format" 
+        });
     }
-    console.log("Review POST body:", req.body)
+    
+    // ✅ Sanitize string inputs to prevent injection
+    name = sanitizeInput(name);
+    comment = sanitizeInput(comment);
+    
+    // ✅ Validate reviewer name
+    if (!name || name.trim() === "") {
+        return res.status(400).json({ 
+            success: false,
+            message: "Reviewer name is required" 
+        });
+    }
+    
+    // ✅ Validate rating is a number and in valid range (1-5)
+    const ratingNum = Number(rating);
+    if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+        return res.status(400).json({ 
+            success: false,
+            message: "Rating must be a number between 1 and 5" 
+        });
+    }
+    
+    // ✅ Ensure rating is an integer (no decimals)
+    if (!Number.isInteger(ratingNum)) {
+        return res.status(400).json({ 
+            success: false,
+            message: "Rating must be a whole number (1, 2, 3, 4, or 5)" 
+        });
+    }
+    
+    // ✅ Validate comment length to prevent DoS
+    if (comment && comment.length > 500) {
+        return res.status(400).json({ 
+            success: false,
+            message: "Comment cannot exceed 500 characters" 
+        });
+    }
+    
     try {
         const existingReview = await ReviewDatabase.findOne({ productId: id, name });
         if (existingReview) {
-            return res.status(400).json({ message: "You have already reviewed this product" });
+            return res.status(400).json({ 
+                success: false,
+                message: "You have already reviewed this product" 
+            });
         }
+        
+        // ✅ Use validated and sanitized values
         const newReview = new ReviewDatabase({
             productId: id,
             name,
-            rating,
-            comment
+            rating: ratingNum,  // Guaranteed to be integer 1-5
+            comment             // Sanitized, max 500 chars
         });
+        
         await newReview.save();
-        res.status(201).json({ success:true, message: "Review added successfully" });
+        res.status(201).json({ success: true, message: "Review added successfully" });
     } catch (err) {
         console.error('Error adding review:', err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ 
+            success: false,
+            message: "Internal server error" 
+        });
     }
 }
 );
@@ -444,7 +497,8 @@ registration.post('/forgot-password', async (req, res) => {
         `${process.env.RESET_LINK_ADMIN}/${resetToken}` :
         `${process.env.RESET_LINK}/${resetToken}`;
 
-      console.log(`${isAdmin ? 'Admin' : 'User'} Reset Link:`, resetLink);
+      // ✅ Security: Don't log password reset tokens
+      console.log(`Password reset email sent to: ${email}`);
 
       // Send appropriate email based on user type
       const emailResult = isAdmin ? 
