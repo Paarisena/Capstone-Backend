@@ -75,8 +75,20 @@ uploads/
 ecosystem.config.js
 .env
 
+# Security Testing Files (DO NOT COMMIT)
 intensive-attack-test.ps1
 security-audit.json
-penetration-tests/api-security-tests.js
-penetration-tests/test-results.json
-security-tests/run-security-audit.sh
+penetration-tests/
+security-tests/
+*security-test*.js
+*attack*.ps1
+*attack*.js
+*intensive*.ps1
+SECURITY_*.md
+SOC_*.md
+OWASP_*.md
+ATTACK_*.md
+VULNERABILITY_*.md
+*_AUDIT_REPORT.md
+*_DASHBOARD.md
+test-security-fix.js
