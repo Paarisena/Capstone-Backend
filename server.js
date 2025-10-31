@@ -14,6 +14,7 @@ import connecttodb from "./DB/mongoDB.js"
 import regis from "./Login page/registration.js"
 import payments from "./Login page/Payments.js"
 import ProductRouter from "./Routes/ProductRoutes.js"
+import ComplianceRouter from "./Routes/ComplianceRoutes.js"
 import path from "path"
 import{ fileURLToPath } from "url"
 import chalk from "chalk"
@@ -137,6 +138,7 @@ app.get('/', (req, res) => {
 
 app.use("/api", regis)
 app.use("/api", ProductRouter)
+app.use("/api/compliance", ComplianceRouter)
 app.use("/api/payments", payments)
 
 
