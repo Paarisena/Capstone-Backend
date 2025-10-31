@@ -75,3 +75,8 @@ uploads/
 ecosystem.config.js
 .env
 
+intensive-attack-test.ps1
+security-audit.json
+penetration-tests/api-security-tests.js
+penetration-tests/test-results.json
+security-tests/run-security-audit.sh
