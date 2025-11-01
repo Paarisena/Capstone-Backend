@@ -3,6 +3,7 @@ import express from "express"
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import adminAuth from "../Middleware/adminAuth.js";
+import { FinancialAuditLog } from "../security-fixes/soc-controls.js";
 
 dotenv.config();
 
@@ -46,6 +47,25 @@ payments.post('/create-payment-intent', async (req, res) => {
         });
 
         await newPayment.save();
+
+        // Log financial event
+        try {
+            await FinancialAuditLog.create({
+                userId,
+                transactionId: paymentIntent.id,
+                type: 'Payment',
+                amount,
+                currency: currency.toUpperCase(),
+                status: 'PENDING',
+                timestamp: new Date(),
+                metadata: {
+                    itemCount: items.length,
+                    paymentMethod: 'stripe'
+                }
+            });
+        } catch (logError) {
+            console.error('Failed to log financial event:', logError.message);
+        }
 
         res.json({
             success: true,
@@ -98,6 +118,35 @@ payments.post('/confirm-payment', async (req, res) => {
             },
             { new: true }
         );
+
+        // Update financial audit log status
+        if (updatedPayment && newStatus === 'succeeded') {
+            try {
+                await FinancialAuditLog.findOneAndUpdate(
+                    { transactionId: paymentIntentId },
+                    { 
+                        status: 'SUCCEEDED',
+                        timestamp: new Date()
+                    }
+                );
+                console.log('✅ Financial audit log updated to SUCCEEDED (confirm-payment)');
+            } catch (logError) {
+                console.error('Failed to update financial audit log:', logError.message);
+            }
+        } else if (updatedPayment && newStatus === 'failed') {
+            try {
+                await FinancialAuditLog.findOneAndUpdate(
+                    { transactionId: paymentIntentId },
+                    { 
+                        status: 'FAILED',
+                        timestamp: new Date()
+                    }
+                );
+                console.log('✅ Financial audit log updated to FAILED (confirm-payment)');
+            } catch (logError) {
+                console.error('Failed to update financial audit log:', logError.message);
+            }
+        }
 
         console.log('Payment status updated to:', newStatus); // ✅ Add logging
 
@@ -154,6 +203,22 @@ payments.post('/webhook', async (req, res) => {
                 { new: true }
             );
             
+            // Update financial audit log to SUCCEEDED
+            if (updatedPayment) {
+                try {
+                    await FinancialAuditLog.findOneAndUpdate(
+                        { transactionId: paymentIntent.id },
+                        { 
+                            status: 'SUCCEEDED',
+                            timestamp: new Date()
+                        }
+                    );
+                    console.log('✅ Financial audit log updated to SUCCEEDED');
+                } catch (logError) {
+                    console.error('Failed to update financial audit log:', logError.message);
+                }
+            }
+            
             // Send real-time update to frontend
             if (updatedPayment && io) {
                 const statusUpdate = {
@@ -181,6 +246,22 @@ payments.post('/webhook', async (req, res) => {
                 { paymentStatus: 'failed', updatedAt: new Date() },
                 { new: true }
             );
+            
+            // Update financial audit log to FAILED
+            if (failedRecord) {
+                try {
+                    await FinancialAuditLog.findOneAndUpdate(
+                        { transactionId: failedPayment.id },
+                        { 
+                            status: 'FAILED',
+                            timestamp: new Date()
+                        }
+                    );
+                    console.log('✅ Financial audit log updated to FAILED');
+                } catch (logError) {
+                    console.error('Failed to update financial audit log:', logError.message);
+                }
+            }
             
             // Send failure update to frontend
             if (failedRecord && io) {

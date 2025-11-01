@@ -13,6 +13,7 @@ export class ComplianceMonitor {
     constructor() {
         this.results = new Map();
         this.schedule = { continuous: 60000, hourly: 3600000, daily: 86400000 };
+        this.auditLog = [];
         console.log(chalk.blue('🔄 [MONITOR] Initialized'));
     }
 
@@ -22,6 +23,7 @@ export class ComplianceMonitor {
         const checks = await Promise.all([
             this.checkAuth(),
             this.checkEncryption(),
+            this.checkDatabase(),
             this.checkLogs(),
             this.checkRateLimit(),
             this.checkCORS(),
@@ -32,6 +34,47 @@ export class ComplianceMonitor {
         const total = checks.length;
         const passed = total - failed.length;
 
+        // Log this compliance check as a security event
+        const eventData = {
+            eventCategory: 'SECURITY',
+            action: 'COMPLIANCE_CHECK',
+            result: failed.length === 0 ? 'SUCCESS' : 'FAILURE',
+            severity: failed.length === 0 ? 'LOW' : failed.length > 3 ? 'HIGH' : 'MEDIUM',
+            userId: 'SYSTEM',
+            timestamp: new Date(),
+            metadata: {
+                totalChecks: total,
+                passed,
+                failed: failed.length,
+                passRate: `${((passed / total) * 100).toFixed(1)}%`,
+                failedChecks: failed.map(f => f.name)
+            }
+        };
+
+        // Save to database
+        try {
+            await SecurityAuditLog.create(eventData);
+            console.log(chalk.gray('  📝 Compliance check logged to audit trail'));
+        } catch (e) {
+            console.error(chalk.red('  ❌ Failed to log compliance check:', e.message));
+        }
+
+        // Also add to in-memory audit log for quick access
+        this.auditLog.push({
+            timestamp: eventData.timestamp.toISOString(),
+            type: eventData.eventCategory,
+            category: eventData.action,
+            message: `Compliance check: ${eventData.result} (${passed}/${total} passed)`,
+            severity: eventData.severity,
+            status: eventData.result,
+            details: eventData.metadata
+        });
+
+        // Keep only last 1000 events in memory
+        if (this.auditLog.length > 1000) {
+            this.auditLog = this.auditLog.slice(-1000);
+        }
+
         if (failed.length > 0) {
             console.log(chalk.red(`❌ ${failed.length} compliance checks failed`));
             await this.alert({ severity: 'HIGH', failedChecks: failed, timestamp: new Date() });
@@ -39,7 +82,15 @@ export class ComplianceMonitor {
             console.log(chalk.green(`✅ All ${total} checks passed`));
         }
 
-        const summary = { timestamp: new Date(), totalChecks: total, passed, failed: failed.length, passRate: `${((passed / total) * 100).toFixed(1)}%`, details: checks };
+        const summary = { 
+            timestamp: new Date(), 
+            totalChecks: total, 
+            passed, 
+            failed: failed.length, 
+            passRate: `${((passed / total) * 100).toFixed(1)}%`, 
+            details: checks 
+        };
+        
         this.results.set(Date.now(), summary);
         return summary;
     }
@@ -55,6 +106,42 @@ export class ComplianceMonitor {
         console.log(chalk.gray('  Checking encryption status...'));
         const issues = [];
         return { control: 'CC6.3/CC6.4', name: 'Encryption Controls', passed: issues.length === 0, issues, checkedAt: new Date() };
+    }
+
+    async checkDatabase() {
+        console.log(chalk.gray('  Checking database connectivity...'));
+        const issues = [];
+        
+        try {
+            // Import mongoose to check connection
+            const { default: mongooseLib } = await import('mongoose');
+            const dbState = mongooseLib.connection.readyState;
+            
+            // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+            if (dbState !== 1) {
+                const stateMap = { 0: 'disconnected', 2: 'connecting', 3: 'disconnecting' };
+                issues.push(`Database not connected: ${stateMap[dbState] || 'unknown state'}`);
+                console.log(chalk.red(`    ❌ Database state: ${stateMap[dbState]}`));
+            } else {
+                console.log(chalk.green('    ✅ Database connected'));
+            }
+            
+            // Test actual database query
+            const testQuery = await SecurityAuditLog.countDocuments().maxTimeMS(5000);
+            console.log(chalk.gray(`    Database query test passed (${testQuery} records)`));
+            
+        } catch (e) {
+            issues.push(`Database connectivity error: ${e.message}`);
+            console.log(chalk.red(`    ❌ Database error: ${e.message}`));
+        }
+        
+        return { 
+            control: 'A1.2', 
+            name: 'Database Connectivity', 
+            passed: issues.length === 0, 
+            issues, 
+            checkedAt: new Date() 
+        };
     }
 
     async checkLogs() {
@@ -184,15 +271,24 @@ export const performHealthCheck = async () => {
         environment: process.env.NODE_ENV || 'development', checks: {}
     };
 
+    // Check database connection
     try {
-        const mongoose = await import('mongoose');
-        if (mongoose.connection.readyState === 1) {
+        // Import mongoose to check connection
+        const { default: mongooseLib } = await import('mongoose');
+        const dbState = mongooseLib.connection.readyState;
+        
+        if (dbState === 1) {
             health.checks.database = { status: 'UP', type: 'MongoDB', readyState: 'connected' };
             console.log(chalk.green('  ✅ Database: UP'));
         } else {
-            health.checks.database = { status: 'DOWN', readyState: mongoose.connection.readyState };
+            const stateMap = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+            health.checks.database = { 
+                status: 'DOWN', 
+                readyState: stateMap[dbState] || 'unknown',
+                stateCode: dbState 
+            };
             health.status = 'DEGRADED';
-            console.log(chalk.red('  ❌ Database: DOWN'));
+            console.log(chalk.red(`  ❌ Database: DOWN (${stateMap[dbState] || 'unknown'})`));
         }
     } catch (e) {
         health.checks.database = { status: 'DOWN', error: e.message };
@@ -262,7 +358,10 @@ export const generateAuditAnalytics = async (period = '24h') => {
     }
 
     return analytics;
+    
 };
+
+
 
 export const complianceMonitor = new ComplianceMonitor();
 console.log(chalk.green('✅ SOC monitoring loaded'));

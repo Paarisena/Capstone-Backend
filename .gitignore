@@ -92,3 +92,4 @@ VULNERABILITY_*.md
 *_AUDIT_REPORT.md
 *_DASHBOARD.md
 test-security-fix.js
+test-compliance-api.ps1

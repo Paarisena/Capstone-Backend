@@ -18,6 +18,7 @@ import ComplianceRouter from "./Routes/ComplianceRoutes.js"
 import path from "path"
 import{ fileURLToPath } from "url"
 import chalk from "chalk"
+import { performHealthCheck, complianceMonitor } from "./security-fixes/soc-monitoring.js"
 
 dotenv.config()
 cloudinaryConfig()
@@ -49,11 +50,10 @@ app.set('trust proxy', 1);
 // Add request logging middleware
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    console.log('Headers:', req.headers);
     next();
 });
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 8000
 
 // Configure CORS early
 app.use(cors({
@@ -73,8 +73,6 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
-
-
 
 // Security middleware
 app.use(helmet({
@@ -97,13 +95,45 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
+// Sanitize user input
+app.use(mongoSanitize());
+
+app.use(express.static(path.join(__dirname,"uploads")))
+app.use('/api/payments/webhook', express.raw({type: 'application/json'}))
+app.use(express.json({ limit: '10mb' })) 
+
+// Root route handler (BEFORE rate limiters)
+app.get('/', (req, res) => {
+    res.status(200).json({ message: 'AVGallery API is running' });
+});
+
+// Health check endpoint (BEFORE rate limiters - NO rate limiting)
+app.get('/api/health', async (req, res) => {
+    try {
+        const health = await performHealthCheck();
+        res.status(200).json(health);
+    } catch (error) {
+        console.error('Health check error:', error);
+        res.status(503).json({
+            status: 'DOWN',
+            timestamp: new Date().toISOString(),
+            error: error.message
+        });
+    }
+});
+
 // Rate limiting for authentication endpoints
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // Limit each IP to 10 requests per windowMs
-    message: 'Too many authentication attempts, please try again 15 minutes later',
+    max: 50, // Increased for development/testing
+    message: 'Too many authentication attempts, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => {
+        // Skip rate limiting for localhost in development
+        const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
+        return process.env.NODE_ENV === 'development' && isLocalhost;
+    }
 });
 
 // Rate limiting for general API
@@ -115,27 +145,29 @@ const apiLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-// Apply rate limiting
+// Relaxed rate limiting for compliance endpoints
+const complianceLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 500, // Very high limit for real-time dashboard
+    message: 'Too many compliance requests, please try again later',
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+        // Skip rate limiting for localhost in development
+        const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
+        return process.env.NODE_ENV === 'development' && isLocalhost;
+    }
+});
+
+// Apply rate limiting to specific routes (AFTER health check)
 app.use('/api/login', authLimiter);
 app.use('/api/register', authLimiter);
 app.use('/api/AdminLogin', authLimiter);
 app.use('/api/AdminRegister', authLimiter);
+app.use('/api/compliance', complianceLimiter); // Relaxed for compliance dashboard
 app.use('/api', apiLimiter);
 
-// Sanitize user input
-app.use(mongoSanitize());
-
-
-app.use(express.static(path.join(__dirname,"uploads")))
-app.use('/api/payments/webhook', express.raw({type: 'application/json'}))
-app.use(express.json({ limit: '10mb' })) 
-
-
-// Root route handler
-app.get('/', (req, res) => {
-    res.status(200).json({ message: 'AVGallery API is running' });
-});
-
+// API Routes
 app.use("/api", regis)
 app.use("/api", ProductRouter)
 app.use("/api/compliance", ComplianceRouter)
@@ -164,15 +196,26 @@ io.on('connection', (socket) => {
 // Initialize function
 const initializeApp = async () => {
     try {
+        // Connect to databases
+        console.log(chalk.yellow('🔄 Connecting to databases...'));
         await connecttodb();
         await mongooseconnect();
+        console.log(chalk.green('✅ Databases connected'));
         
+        // Start compliance monitoring AFTER database is ready
+        console.log(chalk.yellow('🔄 Starting SOC compliance monitoring...'));
+        complianceMonitor.startMonitoring();
+        console.log(chalk.green('✅ Compliance monitoring active'));
+        
+        // Start server
         server.listen(PORT, () => {
-            console.log(chalk.blue(`Server listening on port ${PORT}`));
-            console.log(chalk.green("WebSocket server ready for real-time updates"));
+            console.log(chalk.blue(`✅ Server listening on port ${PORT}`));
+            console.log(chalk.green("✅ WebSocket server ready for real-time updates"));
+            console.log(chalk.green(`✅ Health check: http://localhost:${PORT}/api/health`));
+            console.log(chalk.green(`✅ Compliance dashboard: http://localhost:5173/admin/compliance`));
         });
     } catch (error) {
-        console.error(chalk.red('Failed to initialize app:', error));
+        console.error(chalk.red('❌ Failed to initialize app:', error));
         process.exit(1);
     }
 };
@@ -187,8 +230,6 @@ app.use((err, req, res, next) => {
     console.error(chalk.red('Error stack:', err.stack));
     console.error(chalk.red('Request path:', req.path));
     console.error(chalk.red('Request method:', req.method));
-    console.error(chalk.red('Request headers:', JSON.stringify(req.headers, null, 2)));
-    console.error(chalk.red('Request body:', JSON.stringify(req.body, null, 2)));
     
     // Send detailed error in production temporarily for debugging
     res.status(err.status || 500).json({
@@ -197,7 +238,7 @@ app.use((err, req, res, next) => {
         error: {
             name: err.name,
             message: err.message,
-            stack: err.stack,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
             path: req.path,
             method: req.method
         }
