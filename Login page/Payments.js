@@ -39,7 +39,6 @@ payments.post('/create-payment-intent', async (req, res) => {
             amount,
             currency: currency.toUpperCase(),
             paymentMethod: 'stripe',
-            // ✅ Fixed: Use paymentIntent.status instead of undefined stripeStatus
             paymentStatus: getInitialPaymentStatus(paymentIntent.status),
             transactionId: paymentIntent.id,
             items,
@@ -47,8 +46,6 @@ payments.post('/create-payment-intent', async (req, res) => {
         });
 
         await newPayment.save();
-
-        // Log financial event
         try {
             await FinancialAuditLog.create({
                 userId,
@@ -84,9 +81,9 @@ payments.post('/create-payment-intent', async (req, res) => {
     }
 });
 
-// Replace your getInitialPaymentStatus function with this:
+
 function getInitialPaymentStatus(stripeStatus) {
-    return 'pending'; // Always start as pending, let webhook update to succeeded
+    return 'pending';
 }
 
 // Confirm Payment
