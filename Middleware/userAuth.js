@@ -1,29 +1,28 @@
 import jwt from 'jsonwebtoken';
-import { user, admin } from '../DB/model.js';
+import { user } from '../DB/model.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const adminAuth = async (req, res, next) => {
+const userAuth = async (req, res, next) => {
     try {
         const token = req.cookies?.authToken || req.header('Authorization')?.replace('Bearer ', '');
-        
+
         if (!token) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Access denied. No token provided.' 
+            return res.status(401).json({
+                success: false,
+                message: 'Access denied. No token provided.'
             });
         }
 
         const decoded = jwt.verify(token, process.env.SECRET_TOKEN);
-        
-        // Only allow admin collection — this middleware is for admin-only routes
-        const foundUser = await admin.findById(decoded.id);
+
+        const foundUser = await user.findById(decoded.id);
 
         if (!foundUser || !foundUser.isEmailVerified) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid or unverified admin.'
+                message: 'Invalid or unverified user.'
             });
         }
 
@@ -31,17 +30,16 @@ const adminAuth = async (req, res, next) => {
             id: foundUser._id.toString(),
             email: foundUser.email,
             name: foundUser.name,
-            isAdmin: true
+            isAdmin: false
         };
 
         next();
     } catch (error) {
-        console.error('FlexAuth error:', error);
-        res.status(401).json({ 
-            success: false, 
-            message: 'Invalid token.' 
+        res.status(401).json({
+            success: false,
+            message: 'Invalid token.'
         });
     }
 };
 
-export default adminAuth;
+export default userAuth;

@@ -23,17 +23,6 @@ import { performHealthCheck, complianceMonitor } from "./security-fixes/soc-moni
 dotenv.config()
 cloudinaryConfig()
 
-// Debug environment variables
-console.log('Environment:', {
-    NODE_ENV: process.env.NODE_ENV,
-    PORT: process.env.PORT,
-    DB_CLUSTER: process.env.DB_CLUSTER ? 'Set' : 'Not Set',
-    DB_CLUSTER_NAME: process.env.DB_CLUSTER_NAME ? 'Set' : 'Not Set',
-    DB_USER: process.env.DB_USER ? 'Set' : 'Not Set',
-    CLOUDINARY_NAME: process.env.CLOUDINARY_NAME ? 'Set' : 'Not Set',
-    BREVO_API_KEY: process.env.BREVO_API_KEY ? 'Set' : 'Not Set',
-    STRIPE_API_KEY: process.env.STRIPE_API_KEY ? 'Set' : 'Not Set'
-});
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -47,17 +36,18 @@ const allowedOrigins = [
 const app = express()
 app.set('trust proxy', 1);
 
-// Add request logging middleware
-app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    next();
-});
 
 const PORT = process.env.PORT || 8000
 
 // Configure CORS early
 app.use(cors({
-    origin: true, // Allow all origins temporarily for debugging
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type',
@@ -68,7 +58,7 @@ app.use(cors({
     ],
     exposedHeaders: ['Set-Cookie'],
     credentials: true,
-    maxAge: 86400, // 24 hours in seconds
+    maxAge: 86400,
     optionsSuccessStatus: 204
 }));
 
@@ -159,7 +149,18 @@ const complianceLimiter = rateLimit({
     }
 });
 
+// Strict rate limiting for payment endpoints
+const paymentLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10,
+    message: 'Too many payment attempts, please try again later',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Apply rate limiting to specific routes (AFTER health check)
+app.use('/api/payments/create-payment-intent', paymentLimiter);
+app.use('/api/payments/razorpay', paymentLimiter);
 app.use('/api/login', authLimiter);
 app.use('/api/register', authLimiter);
 app.use('/api/AdminLogin', authLimiter);
@@ -224,24 +225,15 @@ const initializeApp = async () => {
 initializeApp().catch(console.error);
 
 app.use((err, req, res, next) => {
-    console.error(chalk.red('🚨 Error occurred:'));
-    console.error(chalk.red('Error name:', err.name));
-    console.error(chalk.red('Error message:', err.message));
-    console.error(chalk.red('Error stack:', err.stack));
-    console.error(chalk.red('Request path:', req.path));
-    console.error(chalk.red('Request method:', req.method));
-    
-    // Send detailed error in production temporarily for debugging
+    console.error(chalk.red('Error:', err.message));
+    if (process.env.NODE_ENV !== 'production') {
+        console.error(err.stack);
+    }
+
     res.status(err.status || 500).json({
         success: false,
         message: err.message || 'Internal Server Error',
-        error: {
-            name: err.name,
-            message: err.message,
-            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-            path: req.path,
-            method: req.method
-        }
+        ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
     });
 });
 

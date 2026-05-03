@@ -9,10 +9,11 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "start": "node index.js",
+    "start": "node server.js",
     "dev": "node --watch server.js",
     "build": "npm ci --production",
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "echo \"No tests yet\" && exit 0",
+    "seed": "node scripts/seed.js"
   },
   "author": "Your Name",
   "license": "ISC",

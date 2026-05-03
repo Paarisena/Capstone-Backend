@@ -2,7 +2,7 @@ import { payment } from "../DB/model.js"
 import express from "express"
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
-import adminAuth from "../Middleware/adminAuth.js";
+import userAuth from "../Middleware/userAuth.js";
 import { FinancialAuditLog } from "../security-fixes/soc-controls.js";
 
 dotenv.config();
@@ -484,25 +484,30 @@ payments.get('/check-status/:paymentIntentId', async (req, res) => {
     }
 });
 
-payments.post('/reorder/:orderId', adminAuth, async (req, res) => {
+payments.post('/reorder/:orderId', userAuth, async (req, res) => {
     try {
         const { orderId } = req.params;
         const originalOrder = await payment.findOne({ orderId });
 
-        if (!originalOrder) {   
+        if (!originalOrder) {
             return res.status(404).json({
                 success: false,
                 message: 'Original order not found'
             });
         }
-        // Create a new order based on the original
+
+        // Generate a unique orderId for the reorder
+        const newOrderId = `reorder_${Date.now()}_${originalOrder._id}`;
+
         const newOrder = new payment({
             userId: originalOrder.userId,
+            orderId: newOrderId,
             amount: originalOrder.amount,
             currency: originalOrder.currency,
-            paymentMethod: originalOrder.paymentIntentId,
-            paymentStatus: 'Confirmed',
-            items: originalOrder.items
+            paymentMethod: originalOrder.paymentMethod || 'stripe',
+            paymentStatus: 'pending',
+            items: originalOrder.items,
+            shippingAddress: originalOrder.shippingAddress
         });
 
         await newOrder.save();
