@@ -203,21 +203,17 @@ const directPurchase = async (req, res) => {
 
 const getUserOrders = async (req, res) => {
     try {
-        const { userId } = req.query;
-        
+        const userId = req.user?.id || req.query.userId;
+
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.json({ success: false, message: "Invalid userId" });
         }
 
-        const userData = await user.findById(userId);
-        if (!userData) return res.json({ success: false, message: "User not found" });
+        const orders = await Order.find({ userId })
+            .populate('productId', 'productName Price Image')
+            .sort({ orderDate: -1 });
 
-        const orders = userData.orders || [];
-        
-        res.json({ 
-            success: true, 
-            orders: orders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
-        });
+        res.json({ success: true, orders });
 
     } catch (error) {
         console.log(error);

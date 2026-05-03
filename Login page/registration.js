@@ -122,13 +122,22 @@ registration.post('/login', async(req,res) => {
             { expiresIn: "1d" }
         );
 
+        res.cookie('authToken', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
         res.status(200).json({
             success: true,
             message: 'Login successful',
-            token,
-            userId: existinguser._id
+            userId: existinguser._id,
+            name: existinguser.name,
+            email: existinguser.email,
+            role: 'user'
         });
-            
+
     } catch(err) {
         console.error('User login error:', err);
         res.status(500).json({
@@ -287,11 +296,21 @@ registration.post('/verify-login', async (req, res) => {
             process.env.SECRET_TOKEN,
             { expiresIn: "1d" }
         );
+        res.cookie('authToken', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
         return res.status(200).json({
             success: true,
             message: `${isAdmin ? 'Admin' : 'User'} email has been verified successfully`,
-            token,
-            userId: existingUser._id
+            userId: existingUser._id,
+            name: existingUser.name,
+            email: existingUser.email,
+            isAdmin,
+            role: isAdmin ? 'admin' : 'user'
         });
 
     } catch (error) {
@@ -350,11 +369,21 @@ registration.post('/AdminLogin', async(req, res) => {
         }
 
 
+        res.cookie('authToken', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
         res.status(200).json({
             success: true,
             message: 'Login successful',
-            token,
-            userId: existinguser._id
+            userId: existinguser._id,
+            name: existinguser.name,
+            email: existinguser.email,
+            isAdmin: true,
+            role: 'admin'
         });
 
     } catch(err) {
@@ -364,6 +393,15 @@ registration.post('/AdminLogin', async(req, res) => {
             message: 'Server error occurred'
         });
     }
+});
+
+registration.post('/logout', (req, res) => {
+    res.clearCookie('authToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax'
+    });
+    res.status(200).json({ success: true, message: 'Logged out successfully' });
 });
 
 registration.post('/products/:id/reviews', async (req, res) => {
