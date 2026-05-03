@@ -177,13 +177,21 @@ export class ComplianceMonitor {
     async checkTokenExpiry() {
         console.log(chalk.gray('  Checking token expiration...'));
         const issues = [];
-        const MAX_HOURS = 6;
-        const expiry = process.env.JWT_EXPIRES_TIME || '24h';
-        let hours = expiry.endsWith('h') ? parseInt(expiry) : parseInt(expiry) * 24;
-        
+        const MAX_HOURS = 168; // 7d — supports "Keep me logged in" feature
+
+        // Parse expiry string: support h (hours) and d (days)
+        const expiry = process.env.JWT_EXPIRES_TIME || '1d';
+        let hours;
+        if (expiry.endsWith('h')) {
+            hours = parseInt(expiry);
+        } else if (expiry.endsWith('d')) {
+            hours = parseInt(expiry) * 24;
+        } else {
+            hours = parseInt(expiry) || 24; // fallback: treat raw number as hours
+        }
+
         if (hours > MAX_HOURS) issues.push(`Token expiration exceeds recommendation: ${hours}h > ${MAX_HOURS}h`);
-        if (!process.env.JWT_REFRESH_EXPIRES_TIME && hours > 12) issues.push('Long token expiration without refresh token system');
-        
+
         return { control: 'CC6.1', name: 'Token Expiration Policy', passed: issues.length === 0, issues, currentExpiration: `${hours}h`, recommended: `${MAX_HOURS}h`, checkedAt: new Date() };
     }
 

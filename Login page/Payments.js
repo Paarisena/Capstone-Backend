@@ -3,6 +3,7 @@ import express from "express"
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import userAuth from "../Middleware/userAuth.js";
+import adminAuth from "../Middleware/adminAuth.js";
 import { FinancialAuditLog } from "../security-fixes/soc-controls.js";
 
 dotenv.config();
@@ -11,11 +12,12 @@ const payments = express.Router();
 const stripe = new Stripe(process.env.STRIPE_API_KEY);
 
 // Create Payment Intent
-payments.post('/create-payment-intent', async (req, res) => {
+payments.post('/create-payment-intent', userAuth, async (req, res) => {
     try {
-        const {userId, amount, currency = 'sgd', items, shippingAddress } = req.body;
-        
-        if (!userId || !amount || !items) {
+        const { amount, currency = 'sgd', items, shippingAddress } = req.body;
+        const userId = req.user.id; // use verified identity, not user-supplied value
+
+        if (!amount || !items) {
             return res.status(400).json({
                 success: false,
                 message: 'Missing required fields: userId, amount, items'
@@ -168,13 +170,6 @@ payments.post('/confirm-payment', async (req, res) => {
 
 // Webhook endpoint for Stripe events
 payments.post('/webhook', async (req, res) => {
-    console.log('🎯 WEBHOOK CALLED!');
-    console.log('📍 URL:', req.url);
-    console.log('🔤 Content-Type:', req.headers['content-type']);
-    console.log('🔍 Stripe-Signature:', req.headers['stripe-signature'] ? 'Present' : 'Missing');
-    console.log('📦 Body type:', typeof req.body);
-    console.log('🔢 Body length:', req.body ? req.body.length : 'No body');
-    
     const sig = req.headers['stripe-signature'];
     let event;
 
@@ -335,7 +330,10 @@ payments.get('/payment/:orderId', async (req, res) => {
 });
 
 // Get user payments
-payments.get('/user/:userId', async (req, res) => {
+payments.get('/user/:userId', userAuth, async (req, res) => {
+    if (req.user.id !== req.params.userId) {
+        return res.status(403).json({ success: false, message: 'Access denied.' });
+    }
     try {
         const userPayments = await payment.find({ userId: req.params.userId })
             .populate('items.productId', 'productName Price Image') // Removed extra space after Image
@@ -357,7 +355,7 @@ payments.get('/user/:userId', async (req, res) => {
 });
 
 // Refund payment
-payments.post('/refund', async (req, res) => {
+payments.post('/refund', adminAuth, async (req, res) => {
     try {
         const { paymentIntentId, amount, reason } = req.body;
 

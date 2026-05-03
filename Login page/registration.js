@@ -81,7 +81,7 @@ registration.post('/register', async(req,res) => {
 });
 
 registration.post('/login', async(req,res) => {
-    const {email, password} = req.body;
+    const {email, password, rememberMe = false} = req.body;
          
     try {
         const existinguser = await user.findOne({email})
@@ -111,6 +111,11 @@ registration.post('/login', async(req,res) => {
         }
 
         // If email is verified, generate token and complete login
+        const tokenExpiry = rememberMe ? '7d' : '1d';
+        const cookieMaxAge = rememberMe
+            ? 7 * 24 * 60 * 60 * 1000   // 1 week
+            : 24 * 60 * 60 * 1000;        // 1 day
+
         const token = jwt.sign(
             {
                 id: existinguser._id,
@@ -119,14 +124,14 @@ registration.post('/login', async(req,res) => {
                 isAdmin: false
             },
             process.env.SECRET_TOKEN,
-            { expiresIn: "1d" }
+            { expiresIn: tokenExpiry }
         );
 
         res.cookie('authToken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
-            maxAge: 24 * 60 * 60 * 1000
+            maxAge: cookieMaxAge
         });
 
         res.status(200).json({
@@ -135,7 +140,8 @@ registration.post('/login', async(req,res) => {
             userId: existinguser._id,
             name: existinguser.name,
             email: existinguser.email,
-            role: 'user'
+            role: 'user',
+            rememberMe
         });
 
     } catch(err) {
@@ -363,12 +369,6 @@ registration.post('/AdminLogin', async(req, res) => {
             { expiresIn: "1d" }
         );
 
-        if (!existinguser.isEmailVerified) {
-            existinguser.isEmailVerified = true;
-            await existinguser.save();
-        }
-
-
         res.cookie('authToken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -493,7 +493,7 @@ registration.get('/products/:id/reviews', async (req, res) => {
     }
 });
 
-registration.delete('/products/:id/reviews', async (req, res) => {
+registration.delete('/products/:id/reviews', userAuth, async (req, res) => {
     const id = req.params.id;
     const { name } = req.body;
     try {

@@ -155,7 +155,7 @@ export class FraudDetectionSystem {
     }
 
     async getRecentTransactions(userId, ms) {
-        try { return await Transaction.find({ userId, createdAt: { $gte: new Date(Date.now() - ms) } }).sort({ createdAt: -1 }); }
+        try { return await FinancialAuditLog.find({ userId, timestamp: { $gte: new Date(Date.now() - ms) } }).sort({ timestamp: -1 }); }
         catch { return []; }
     }
 
@@ -187,7 +187,7 @@ export const transactionMonitor = {
     },
 
     async getUserTransactionHistory(userId) {
-        try { return await Transaction.find({ userId, status: 'COMPLETED' }).sort({ createdAt: -1 }).limit(10); }
+        try { return await FinancialAuditLog.find({ userId, status: 'SUCCEEDED' }).sort({ timestamp: -1 }).limit(10); }
         catch { return []; }
     },
 
