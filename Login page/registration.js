@@ -9,6 +9,7 @@ import brevo from'@getbrevo/brevo'
 import crypto from "crypto"
 import mongoose from "mongoose"
 import { sanitizeInput } from "../security-fixes/01-enhanced-error-handling.js"
+import userAuth from "../Middleware/userAuth.js"
 import { sendEmail, sendAdminResetEmail, sendLoginVerificationEmail, passwordSuccessEmail, verificationSuccess } from "./Dashboard.js"
 
 
