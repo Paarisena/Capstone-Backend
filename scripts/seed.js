@@ -222,50 +222,7 @@ async function seed() {
         log.ok(`User created   → ${userEmail}  /  User@123`);
     }
 
-    // ── 4. Seed sample products ────────────────────────────────────────────────
-    console.log("\n🖼   Seeding products…");
-
-    const sampleProducts = [
-        {
-            productName:        "Wabi-Sabi Vase",
-            productDescription: "Handcrafted ceramic vase embodying the beauty of imperfection. Each piece is unique with natural imperfections that celebrate wabi-sabi aesthetics.",
-            Price:              "120",
-            Category:           "Wabi-Sabi",
-            Image:              ["https://via.placeholder.com/400x400?text=Wabi-Sabi+Vase"],
-            createdBy:          adminDoc._id,
-            isPublic:           true
-        },
-        {
-            productName:        "Abstract Canvas No. 7",
-            productDescription: "Bold abstract painting on stretched canvas. Vibrant colours and dynamic brushwork create a captivating focal point for any room.",
-            Price:              "350",
-            Category:           "Abstract",
-            Image:              ["https://via.placeholder.com/400x400?text=Abstract+Canvas"],
-            createdBy:          adminDoc._id,
-            isPublic:           true
-        },
-        {
-            productName:        "Minimalist Line Print",
-            productDescription: "Clean, single-line art print on archival paper. Understated elegance for modern interiors.",
-            Price:              "75",
-            Category:           "Minimalist",
-            Image:              ["https://via.placeholder.com/400x400?text=Minimalist+Print"],
-            createdBy:          adminDoc._id,
-            isPublic:           true
-        }
-    ];
-
-    for (const p of sampleProducts) {
-        const exists = await Product.findOne({ productName: p.productName });
-        if (exists) {
-            log.skip(`Product already exists: ${p.productName}`);
-        } else {
-            await Product.create(p);
-            log.ok(`Product created: ${p.productName}  ($${p.Price})`);
-        }
-    }
-
-    // ── 5. Seed sample profile for the user ───────────────────────────────────
+    // ── 4. Seed sample profile for the user ───────────────────────────────────
     console.log("\n📋  Seeding user profile…");
     const existingProfile = await Profile.findOne({ userId: userDoc._id });
     if (existingProfile) {
@@ -286,7 +243,6 @@ async function seed() {
     const counts = await Promise.all([
         Admin.countDocuments(),
         User.countDocuments(),
-        Product.countDocuments(),
         Profile.countDocuments(),
         Order.countDocuments(),
         Payment.countDocuments()
@@ -295,11 +251,10 @@ async function seed() {
     console.log("\n📊  Collection counts:");
     console.log(`    admins    : ${counts[0]}`);
     console.log(`    users     : ${counts[1]}`);
-    console.log(`    AdminData : ${counts[2]}`);
-    console.log(`    Profiles  : ${counts[3]}`);
-    console.log(`    Orders    : ${counts[4]}`);
-    console.log(`    Payments  : ${counts[5]}`);
-    console.log(`    Verifications, Reviews — not seeded (runtime-only)\n`);
+    console.log(`    Profiles  : ${counts[2]}`);
+    console.log(`    Orders    : ${counts[3]}`);
+    console.log(`    Payments  : ${counts[4]}`);
+    console.log(`    Products, Verifications, Reviews — not seeded (managed via admin dashboard)\n`);
 
     await mongoose.disconnect();
     log.ok("Done. Disconnected.\n");
