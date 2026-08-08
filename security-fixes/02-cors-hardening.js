@@ -11,7 +11,8 @@ import chalk from 'chalk';
 const allowedOrigins = [
     "http://localhost:5173",
     "https://www.avgallery.shop",
-    "https://avgallery.shop"
+    "https://avgallery.shop",
+    "https://sync-loop-neon.vercel.app"
 ];
 
 // Dynamic origin validation function
