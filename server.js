@@ -31,7 +31,8 @@ const __dirname = path.dirname(__filename)
 const allowedOrigins = [
     "http://localhost:5173",
     "https://www.avgallery.shop",
-    "https://avgallery.shop"
+    "https://avgallery.shop",
+    "https://avgallery.netlify.app/"
 ];
 
 const app = express()
